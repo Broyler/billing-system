@@ -1,0 +1,35 @@
+# src/billing_system/domain/value_objects/invoice_line.py
+# Класс Value Object для записи в счете.
+from dataclasses import dataclass
+from decimal import Decimal
+
+from billing_system.domain.errors import InvalidQuantityError
+
+from .money import Money
+
+
+@dataclass(frozen=True)
+class InvoiceLine:
+    """Класс данных Value Object для строчки/записи в счете."""
+
+    description: str
+    unit_price: Money
+    quantity: Decimal  # Может быть вещественным для граммовок
+
+    def __post_init__(self) -> None:
+        if not self.description:
+            raise ValueError
+        if self.quantity <= 0:
+            raise InvalidQuantityError
+
+    @property
+    def line_total(self) -> Money:
+        """Свойство для получения общей суммы за строчку."""
+        return self.unit_price * self.quantity
+
+    def __str__(self) -> str:
+        """Магический метод для представления строчки счета как строки."""
+        return (
+            f"{self.description}: {self.quantity} * "
+            f"{self.unit_price} = {self.line_total}"
+        )

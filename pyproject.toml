@@ -33,9 +33,10 @@ line-length = 79
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
+    "RUF002",
     "D203",
     "D213",
-    "D100",  # Missing module docstring 
+    "D100",  # Missing module docstring
     "D104",  # Missing public package docstring
     "D105",  # Missing magic method docstring
     "D106",  # Missing class __init__ docstring
@@ -57,8 +58,8 @@ no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
+warn_unreachable = true
 strict = true
 
-[[tool.mypy.overrides]]
-module = ["tests.*", "test_*"]
-strict = false
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "D101", "D102"]
