@@ -21,18 +21,27 @@ class Money:
     def __post_init__(self) -> None:
         """Проверка инвариантов после инициализации."""
         if not self.amount.is_finite():
-            raise InvalidMoneyError
+            raise InvalidMoneyError("Деньги должны быть вещественными.")
 
-        temp = self.amount.quantize(Decimal("1.00"), rounding=ROUND_HALF_UP)
-        object.__setattr__(self, "amount", temp)
+        q: Decimal = self.__quantize(self.amount)
+        object.__setattr__(self, "amount", q)
+
+    def __quantize(self, amount: Decimal) -> Decimal:
+        """Квантование до точности валюты."""
+        q_exp: Decimal = (
+            Decimal("1." + "0" * self.currency.exp)
+            if self.currency.exp > 0
+            else Decimal(1)
+        )
+        return amount.quantize(q_exp, rounding=ROUND_HALF_UP)
 
     def __add__(self, other: object) -> "Money":
+        """Сложение с другими деньгами."""
         if not isinstance(other, Money):
-            raise TypeError
+            raise TypeError("Можно складывать только деньги и деньги.")
 
         if self.currency != other.currency:
-            # Инвариант: складывать можно только одну валюту
-            raise CurrencyMismatchError
+            raise CurrencyMismatchError("Можно складывать только одну валюту.")
 
         return Money(
             amount=self.amount + other.amount,
@@ -40,12 +49,12 @@ class Money:
         )
 
     def __sub__(self, other: object) -> "Money":
+        """Вычитание с другими деньгами."""
         if not isinstance(other, Money):
-            raise TypeError
+            raise TypeError("Можно вычитать только деньги и деньги.")
 
         if self.currency != other.currency:
-            # Инвариант: вычитать можно только одну валюту
-            raise CurrencyMismatchError
+            raise CurrencyMismatchError("Можно вычитать только одну валюту.")
 
         return Money(
             amount=self.amount - other.amount,
@@ -53,18 +62,24 @@ class Money:
         )
 
     def __mul__(self, value: object) -> "Money":
+        """Умножение денег на скаляр."""
         if not isinstance(value, (int, Decimal)):
-            raise TypeError
+            raise TypeError("Можно умножать деньги на int и Decimal.")
 
         value = Decimal(value)
         if not value.is_finite():
-            # Инвариант: сумма должна быть числовой и конечной
-            raise InvalidMoneyError
+            raise InvalidMoneyError(
+                "Деньги могут умножаться только на вещественное.",
+            )
 
         return Money(
-            amount=self.amount * Decimal(value),
+            amount=self.amount * value,
             currency=self.currency,
         )
+
+    def __rmul__(self, value: object) -> "Money":
+        """Поддержка умножения справа."""
+        return self * value
 
     def __str__(self) -> str:
         """Получение строковых данных о деньгах."""

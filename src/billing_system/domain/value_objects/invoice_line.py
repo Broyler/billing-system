@@ -3,7 +3,10 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
-from billing_system.domain.errors import InvalidQuantityError
+from billing_system.domain.errors import (
+    InvalidInvoiceLineError,
+    InvalidQuantityError,
+)
 
 from .money import Money
 
@@ -17,10 +20,10 @@ class InvoiceLine:
     quantity: Decimal  # Может быть вещественным для граммовок
 
     def __post_init__(self) -> None:
-        if not self.description:
-            raise ValueError
+        if not self.description.strip():
+            raise InvalidInvoiceLineError("Нужно описание для строчки счета.")
         if self.quantity <= 0:
-            raise InvalidQuantityError
+            raise InvalidQuantityError("Количество должно быть положительным.")
 
     @property
     def line_total(self) -> Money:
