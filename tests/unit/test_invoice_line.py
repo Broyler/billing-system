@@ -6,15 +6,11 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from billing_system.domain.errors.invalid_invoice_line import (
+from billing_system.domain.errors import (
     InvalidInvoiceLineError,
+    InvalidQuantityError,
 )
-from billing_system.domain.errors.invalid_quantity import InvalidQuantityError
-from billing_system.domain.value_objects import (
-    Currency,
-    Money,
-)
-from billing_system.domain.value_objects.invoice_line import InvoiceLine
+from billing_system.domain.value_objects import Currency, InvoiceLine, Money
 
 
 def test_empty_description() -> None:

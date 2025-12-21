@@ -2,11 +2,13 @@
 from .currency import Currency
 from .discount import Discount
 from .invoice_id import InvoiceId
+from .invoice_line import InvoiceLine
 from .money import Money
 
 __all__ = [
     "Currency",
     "Discount",
     "InvoiceId",
+    "InvoiceLine",
     "Money",
 ]
