@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class InvoiceStatus(Enum):
-    """Класс для Value Object статуса счета."""
+    """Enum для value object статуса счета."""
 
     DRAFT = "DRAFT"
     ISSUED = "ISSUED"

@@ -14,7 +14,3 @@ class Discount:
     """
 
     amount: Money
-
-    def __str__(self) -> str:
-        """Магический метод для представления скидки в виде строки."""
-        return str(self.amount)

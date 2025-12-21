@@ -21,6 +21,15 @@ def test_empty_description() -> None:
         _ = InvoiceLine("", Money(Decimal(50), Currency.EUR), Decimal(20))
 
 
+def test_long_description() -> None:
+    with pytest.raises(InvalidInvoiceLineError):
+        _ = InvoiceLine(
+            "a" * 61,
+            Money(Decimal(50), Currency.EUR),
+            Decimal(20),
+        )
+
+
 def test_negative_quantity() -> None:
     with pytest.raises(InvalidQuantityError):
         _ = InvoiceLine(

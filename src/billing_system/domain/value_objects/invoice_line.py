@@ -10,6 +10,8 @@ from billing_system.domain.errors import (
 
 from .money import Money
 
+MAX_LINE_DESCRIPTION_LENGTH = 60
+
 
 @dataclass(frozen=True)
 class InvoiceLine:
@@ -22,6 +24,12 @@ class InvoiceLine:
     def __post_init__(self) -> None:
         if not self.description.strip():
             raise InvalidInvoiceLineError("Нужно описание для строчки счета.")
+        if len(self.description.strip()) > MAX_LINE_DESCRIPTION_LENGTH:
+            msg = (
+                f"Описание строчки не может быть длиннее"
+                f"{MAX_LINE_DESCRIPTION_LENGTH} символов.",
+            )
+            raise InvalidInvoiceLineError(msg)
         if self.quantity <= 0:
             raise InvalidQuantityError("Количество должно быть положительным.")
 
