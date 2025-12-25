@@ -1,10 +1,10 @@
 # tests/fake_clock.py
 import datetime
 
-from billing_system.domain.protocols import Clock
+from billing_system.domain.protocols import ClockProtocol
 
 
-class FakeClock(Clock):
+class FakeClock(ClockProtocol):
     """Инфра класс для протокола фейк часов для тестов."""
 
     def __init__(self) -> None:

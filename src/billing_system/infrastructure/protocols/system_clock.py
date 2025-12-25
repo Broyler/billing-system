@@ -1,10 +1,10 @@
 # src/billing_system/infrastructure/protocols/system_clock.py
 import datetime
 
-from billing_system.domain.protocols import Clock
+from billing_system.domain.protocols import ClockProtocol
 
 
-class SystemClock(Clock):
+class SystemClock(ClockProtocol):
     """Инфра класс для протокола часов, исп. системное время."""
 
     def now(self) -> datetime.datetime:

@@ -8,7 +8,7 @@ from billing_system.domain.errors import (
     InvoiceOperationError,
     NegativeMoneyError,
 )
-from billing_system.domain.protocols import Clock
+from billing_system.domain.protocols import ClockProtocol
 from billing_system.domain.value_objects import (
     Currency,
     Discount,
@@ -142,7 +142,7 @@ class Invoice:
         )
         self.__tax = tax
 
-    def issue(self, clock: Clock) -> None:
+    def issue(self, clock: ClockProtocol) -> None:
         """Метод для выставления счета."""
         self._require_status(
             InvoiceStatus.DRAFT,
@@ -155,7 +155,7 @@ class Invoice:
         self.__status = InvoiceStatus.ISSUED
         self.__iss_at = clock.now()
 
-    def void(self, clock: Clock, idempotency_key: str) -> None:
+    def void(self, clock: ClockProtocol, idempotency_key: str) -> None:
         """Метод для обнуления счета."""
         if not self._check_idempotency_void(idempotency_key):
             return
@@ -199,7 +199,7 @@ class Invoice:
             raise InvoiceOperationError("Счет уже оплачен.")
         return True
 
-    def mark_paid(self, clock: Clock, idempotency_key: str) -> None:
+    def mark_paid(self, clock: ClockProtocol, idempotency_key: str) -> None:
         """Метод для отметки счета как оплаченного."""
         if not self._check_idempotency_paid(idempotency_key):
             return

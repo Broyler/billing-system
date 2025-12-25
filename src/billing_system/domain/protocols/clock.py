@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Protocol
 
 
-class Clock(Protocol):
+class ClockProtocol(Protocol):
     """Абстрактный протокол часов для инъекции."""
 
     def now(self) -> datetime:

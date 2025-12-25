@@ -1,3 +1,3 @@
-from .clock import Clock
+from .clock import ClockProtocol
 
-__all__ = ["Clock"]
+__all__ = ["ClockProtocol"]

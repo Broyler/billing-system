@@ -2,23 +2,32 @@
 # Value object для валюты
 from enum import Enum
 
+from billing_system.domain.errors import CurrencyMismatchError
+
 
 class Currency(Enum):
     """Класс Enum для представления валюты. Имеет экспоненту."""
 
-    exp: int
+    RUB = "RUB"
+    EUR = "EUR"
+    USD = "USD"
+    JPY = "JPY"
 
-    RUB = ("RUB", 2)
-    EUR = ("EUR", 2)
-    USD = ("USD", 2)
-    JPY = ("JPY", 0)
+    @property
+    def exp(self) -> int:
+        """Метод-маппинг для получения экспоненты валюты (2 по умолчанию)."""
+        return {
+            Currency.RUB: 2,
+            Currency.EUR: 2,
+            Currency.USD: 2,
+            Currency.JPY: 0,
+        }.get(self, 2)
 
-    def __new__(cls, code: str, exp: int) -> "Currency":
-        """Задает параметры кода и экспоненты валюты при создании."""
-        obj = object.__new__(cls)
-        obj._value_ = code
-        obj.exp = exp
-        return obj
-
-    def __str__(self) -> str:
-        return str(self.value)
+    @classmethod
+    def from_code(cls, code: str) -> "Currency":
+        """Метод для получения Enum валюты по значению."""
+        try:
+            return cls(code)
+        except ValueError:
+            msg = f"Нет такой валюты: {code}"
+            raise CurrencyMismatchError(msg) from None
