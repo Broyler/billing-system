@@ -9,6 +9,7 @@ from billing_system.application.dto import (
     InvoiceAddLineRequest,
     IssueInvoiceRequest,
 )
+from billing_system.application.errors import InvoiceNotFoundError
 from billing_system.application.usecase import (
     CreateInvoice,
     InvoiceAddLine,
@@ -16,7 +17,6 @@ from billing_system.application.usecase import (
 )
 from billing_system.domain.errors import (
     CurrencyMismatchError,
-    InvoiceCurrencyMismatchError,
 )
 from billing_system.domain.value_objects import (
     Currency,
@@ -34,14 +34,14 @@ def test_create_invoice() -> None:
     req = CreateInvoiceRequest(id=uid, currency="EUR")
     CreateInvoice(repo)(req)
     invoice = repo.get(InvoiceId(uid))
-    assert invoice.invoice_id == uid
+    assert invoice.invoice_id == InvoiceId(uid)
 
 
 def test_create_wrong_currency() -> None:
     repo = InvoiceRepoInMemo()
     uid = uuid4()
     with pytest.raises(CurrencyMismatchError):
-        CreateInvoice(repo)(CreateInvoiceRequest(id=uid, currency="LOL"))
+        CreateInvoice(repo)(CreateInvoiceRequest(id=uid, currency="AAA"))
 
 
 def test_add_line() -> None:
@@ -50,8 +50,7 @@ def test_add_line() -> None:
     CreateInvoice(repo)(CreateInvoiceRequest(id=uid, currency="EUR"))
     InvoiceAddLine(repo)(
         InvoiceAddLineRequest(
-            id=uid,
-            currency="EUR",
+            invoice_id=uid,
             amount=Decimal("1.5"),
             quantity=Decimal("2.0"),
             description="Печенье",
@@ -62,22 +61,7 @@ def test_add_line() -> None:
     assert invoice.total == Money(Decimal("1.5"), Currency.EUR) * Decimal(
         "2.0",
     )
-
-
-def test_add_line_wrong_currency() -> None:
-    repo = InvoiceRepoInMemo()
-    uid = uuid4()
-    CreateInvoice(repo)(CreateInvoiceRequest(id=uid, currency="EUR"))
-    with pytest.raises(InvoiceCurrencyMismatchError):
-        InvoiceAddLine(repo)(
-            InvoiceAddLineRequest(
-                id=uid,
-                currency="RUB",
-                amount=Decimal("1.5"),
-                quantity=Decimal("2.0"),
-                description="Печенье",
-            ),
-        )
+    assert invoice.status == InvoiceStatus.DRAFT
 
 
 def test_issue_invoice() -> None:
@@ -87,8 +71,7 @@ def test_issue_invoice() -> None:
     CreateInvoice(repo)(CreateInvoiceRequest(id=uid, currency="EUR"))
     InvoiceAddLine(repo)(
         InvoiceAddLineRequest(
-            id=uid,
-            currency="EUR",
+            invoice_id=uid,
             amount=Decimal("1.5"),
             quantity=Decimal("2.0"),
             description="Печенье",
@@ -98,3 +81,37 @@ def test_issue_invoice() -> None:
     invoice = repo.get(InvoiceId(uid))
     assert invoice.status == InvoiceStatus.ISSUED
     assert invoice.issued_at is not None
+
+
+def test_find_non_existing_invoice() -> None:
+    repo = InvoiceRepoInMemo()
+    with pytest.raises(InvoiceNotFoundError):
+        repo.get(InvoiceId(uuid4()))
+
+
+def test_invoice_total_matches() -> None:
+    repo = InvoiceRepoInMemo()
+    clock = FakeClock()
+    uid = uuid4()
+    CreateInvoice(repo)(CreateInvoiceRequest(id=uid, currency="EUR"))
+    InvoiceAddLine(repo)(
+        InvoiceAddLineRequest(
+            invoice_id=uid,
+            amount=Decimal("1.5"),
+            quantity=Decimal("2.0"),
+            description="Печенье",
+        ),
+    )
+    InvoiceAddLine(repo)(
+        InvoiceAddLineRequest(
+            invoice_id=uid,
+            amount=Decimal("5.3"),
+            quantity=Decimal("1.0"),
+            description="Шоколад",
+        ),
+    )
+    IssueInvoice(repo, clock)(IssueInvoiceRequest(invoice_id=uid))
+    invoice = repo.get(InvoiceId(uid))
+    mon1 = Money(Decimal("1.5"), Currency.EUR) * Decimal("2.0")
+    mon2 = Money(Decimal("5.3"), Currency.EUR) * Decimal("1.0")
+    assert invoice.total == mon1 + mon2

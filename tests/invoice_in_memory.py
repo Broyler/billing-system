@@ -1,11 +1,8 @@
 # tests/invoice_in_memory.py
+from billing_system.application.errors import InvoiceNotFoundError
 from billing_system.domain.aggregates import Invoice
 from billing_system.domain.repositories import InvoiceRepository
 from billing_system.domain.value_objects import InvoiceId
-
-
-class InvoiceNotFoundError(Exception):
-    """Ошибка не найденного счета."""
 
 
 class InvoiceRepoInMemo(InvoiceRepository):

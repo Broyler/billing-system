@@ -12,12 +12,13 @@ class CreateInvoiceRequest(BaseModel):
     currency: str
 
 
-class InvoiceAddLineRequest(CreateInvoiceRequest):
+class InvoiceAddLineRequest(BaseModel):
     """DTO для данных, необходимых для добавления строчки в счет.
 
-    Принимает id счета, валюту (наследует из CreateInvoiceRequest)
+    Принимает id счета, количество, стоимость и описание.
     """
 
+    invoice_id: UUID
     amount: Decimal
     quantity: Decimal
     description: str
