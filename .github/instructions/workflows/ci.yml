@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Установка зависимостей
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Установка зависимостей (dev)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Запуск Ruff линтера
+        run: |
+          ruff check .
+
+      - name: Запуск Ruff (проверка форматирования)
+        run: |
+          ruff format --check .
+
+      - name: Запуск mypy
+        run: |
+          mypy .
+
+      - name: Запуск тестов покрытия
+        run: |
+          pytest -q --cov=billing_system --cov-report=xml --cov-report=term-missing
+
+      - name: Загрузка результатов тестов покрытия
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml

@@ -80,6 +80,10 @@ ignore = [
 [tool.ruff.format]
 quote-style = "double"
 
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
