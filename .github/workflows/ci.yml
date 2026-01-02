@@ -53,3 +53,10 @@ jobs:
         with:
           name: coverage-xml
           path: coverage.xml
+
+      - name: Загрузка тестов на Codacy
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        run: |
+          python -m pip install --upgrade codacy-coverage
+          python -m codacy_coverage report -r coverage.xml
