@@ -30,6 +30,36 @@ build-backend = "hatchling.build"
 target-version = "py312"
 line-length = 79
 
+[tool.bandit]
+exclude_dirs = ["tests", "htmlcov", ".venv", "dist", "build"]
+skips = ["B101"]
+
+[tool.lizard]
+exclude = ["tests/*", "htmlcov/*", ".venv/*", "dist/*", "build/*", "uv.lock"]
+ignore_warnings = true
+
+[tool.prospector]
+ignore-paths = ["tests", "htmlcov", ".venv", "dist", "build"]
+max-line-length = 79
+profile = "strictness_veryhigh"
+
+[tool.pylint.main]
+ignore = ["tests", "htmlcov", ".venv", "dist", "build"]
+ignore-paths = ["uv.lock"]
+py-version = "3.12"
+jobs = 0
+
+[tool.pylint.format]
+max-line-length = 79
+
+[tool.pylint.messages_control]
+disable = [
+  "missing-module-docstring",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "too-few-public-methods",
+]
+
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [

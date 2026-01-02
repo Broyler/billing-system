@@ -103,9 +103,9 @@ class InvoiceSqliteRepository(InvoiceRepository):
         return self.__get_conn().cursor()
 
     def __create_tables(self) -> None:
+        """Метод должен создать таблицы на старте репозитория."""
         conn = sqlite3.connect(self.__db_path)
         cur = conn.cursor()
-        """Метод должен создать таблицы на старте репозитория."""
         queries = [
             """
             PRAGMA foreign_keys = ON;
