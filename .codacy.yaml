@@ -7,6 +7,7 @@ exclude_paths:
   - "htmlcov/**"
   - "dist/**"
   - "build/**"
+  - "README.md"
 
 engines:
   bandit:
