@@ -1,5 +1,6 @@
 # src/billing_system/domain/aggregates/invoice.py
 
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
@@ -20,11 +21,32 @@ from billing_system.domain.value_objects import (
 )
 
 
+@dataclass(frozen=True)
+class InvoiceRehydrateData:
+    """Объект для регидрации счета."""
+
+    invoice_id: InvoiceId
+    currency: Currency
+    status: InvoiceStatus
+    lines: list[InvoiceLine]
+    tax: Tax | None
+    discount: Discount | None
+    issued_at: datetime | None
+    paid_at: datetime | None
+    voided_at: datetime | None
+    void_idempotency: str | None
+    paid_idempotency: str | None
+
+
 class Invoice:
     """Агрегат счета."""
 
-    def __init__(self, currency: Currency, invoice_id: InvoiceId) -> None:
-        """Конструктор для агрегата счета. Приватные поля (инкапсуляция)."""
+    def __init__(
+        self,
+        currency: Currency,
+        invoice_id: InvoiceId,
+    ) -> None:
+        """Конструктор для агрегата счета."""
         self.__currency = currency
         self.__invoice_id = invoice_id
         self.__status = InvoiceStatus.DRAFT
@@ -36,6 +58,24 @@ class Invoice:
         self.__voided_at: datetime | None = None
         self.__void_idempotency: str | None = None
         self.__paid_idempotency: str | None = None
+
+    @classmethod
+    def rehydrate(
+        cls,
+        data: InvoiceRehydrateData,
+    ) -> "Invoice":
+        """Метод для создания (регидрации) агрегата счета по параметрам."""
+        invoice = cls(currency=data.currency, invoice_id=data.invoice_id)
+        invoice.__status = data.status
+        invoice.__lines = data.lines
+        invoice.__tax = data.tax
+        invoice.__discount = data.discount
+        invoice.__iss_at = data.issued_at
+        invoice.__paid_at = data.paid_at
+        invoice.__voided_at = data.voided_at
+        invoice.__void_idempotency = data.void_idempotency
+        invoice.__paid_idempotency = data.paid_idempotency
+        return invoice
 
     @property
     def currency(self) -> Currency:
@@ -81,6 +121,16 @@ class Invoice:
     def voided_at(self) -> datetime | None:
         """Геттер для времени аннулирования счета."""
         return self.__voided_at
+
+    @property
+    def payment_idempotency_key(self) -> str | None:
+        """Геттер для ключа идемпотенции статуса оплачено."""
+        return self.__paid_idempotency
+
+    @property
+    def void_idempotency_key(self) -> str | None:
+        """Геттер для ключа идемпотенции статуса аннулировано."""
+        return self.__void_idempotency
 
     def _require_status(
         self,
