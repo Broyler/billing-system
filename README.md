@@ -1,4 +1,6 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0e79dc0c014248e7a9f56311aa491a21)](https://app.codacy.com/gh/Broyler/billing-system/dashboard)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/0e79dc0c014248e7a9f56311aa491a21)](https://app.codacy.com/gh/Broyler/billing-system/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+
 # Система оплаты (пет-проект DDD)
 
 Пет-проект системы оплаты на применение практик **Domain Driven Design
