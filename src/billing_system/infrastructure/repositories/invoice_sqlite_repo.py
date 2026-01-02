@@ -37,11 +37,6 @@ def minor_to_money(amount_minor: int, currency: Currency) -> Money:
     return Money(amount=amount, currency=currency)
 
 
-def amount_to_minor(amount: Decimal, currency: Currency) -> int:
-    """Преобразовывает сумму денег в минорный размер для хранения."""
-    return int(amount * 10**currency.exp)
-
-
 def money_to_minor(money: Money) -> int:
     """Преобразовывает объект денег в минорную сумму для бд."""
     return int(money.amount * 10**money.currency.exp)
@@ -97,17 +92,15 @@ class InvoiceSqliteRepository(InvoiceRepository):
             self.__conn.close()
         self.__conn = None
 
-    def __get_cursor(self) -> sqlite3.Cursor:
-        """Метод для получения курсора, кидает ошибку если нет подключения."""
-        if not self.__conn:
-            raise NoConnectionError("Нет подключения.")
-        return self.__conn.cursor()
-
     def __get_conn(self) -> sqlite3.Connection:
         """Метод для получения подключения, кидает ошибку если его нет."""
         if not self.__conn:
             raise NoConnectionError("Нет подключения.")
         return self.__conn
+
+    def __get_cursor(self) -> sqlite3.Cursor:
+        """Метод для получения курсора, кидает ошибку если нет подключения."""
+        return self.__get_conn().cursor()
 
     def __create_tables(self) -> None:
         conn = sqlite3.connect(self.__db_path)

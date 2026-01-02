@@ -74,6 +74,17 @@ def test_wrong_types(mon: Money, val: object, op_minus: bool) -> None:
             _ = mon + val
 
 
+def test_mul_wrong_type() -> None:
+    with pytest.raises(TypeError):
+        _ = Money(Decimal("36.00"), Currency.USD) * "hello"
+
+
+def test_rmul() -> None:
+    mon1 = Money(Decimal("36.00"), Currency.USD)
+    mon2 = 10 * mon1
+    assert mon2.amount == Decimal("360.00")
+
+
 def test_right_types() -> None:
     mon1 = Money(Decimal("36.00"), Currency.USD)
     assert mon1 * 10 == mon1 * Decimal("10.00")

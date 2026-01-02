@@ -48,6 +48,15 @@ def test_zero_quantity() -> None:
         )
 
 
+def test_str() -> None:
+    line = InvoiceLine(
+        "Фруктовая корзина",
+        Money(Decimal(50), Currency.EUR),
+        Decimal(20),
+    )
+    assert str(line) == "Фруктовая корзина: 20 * 50.00 EUR = 1000.00 EUR"
+
+
 @given(
     st.decimals(
         allow_infinity=False,
