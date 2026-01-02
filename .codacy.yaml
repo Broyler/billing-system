@@ -1,0 +1,30 @@
+---
+exclude_paths:
+  - "uv.lock"
+  - "tests/**"
+  - "**/__pycache__/**"
+  - ".venv/**"
+  - "htmlcov/**"
+  - "dist/**"
+  - "build/**"
+
+engines:
+  bandit:
+    exclude_paths:
+      - "tests/**"
+      - "uv.lock"
+
+  pylintpython3:
+    exclude_paths:
+      - "tests/**"
+      - "uv.lock"
+
+  prospector:
+    exclude_paths:
+      - "tests/**"
+      - "uv.lock"
+
+  lizard:
+    exclude_paths:
+      - "tests/**"
+      - "uv.lock"
