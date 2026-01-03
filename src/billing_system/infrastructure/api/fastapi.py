@@ -116,6 +116,6 @@ def create_app(_uow: UnitOfWork, _clock: ClockProtocol) -> FastAPI:
     return _app
 
 
-uow = SqliteUnitOfWork(Path("db.sqlite"))
-clock = SystemClock()
-app = create_app(uow, clock)
+app_uow = SqliteUnitOfWork(Path("db.sqlite"))
+app_clock = SystemClock()
+app = create_app(app_uow, app_clock)

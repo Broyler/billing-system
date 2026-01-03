@@ -1,7 +1,7 @@
 # src/billing_system/infrastructure/protocols/system_clock.py
 import datetime
 
-from billing_system.domain.protocols import ClockProtocol
+from billing_system.domain.protocols.clock import ClockProtocol
 
 
 class SystemClock(ClockProtocol):

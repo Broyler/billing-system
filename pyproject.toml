@@ -101,6 +101,10 @@ disallow_subclassing_any = false
 warn_no_return = true
 warn_unreachable = true
 strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.mypy."billing_system.infrastructure.api.*"]
+disallow_untyped_decorators = false
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "D101", "D102", "D103", "FBT001", "PT006"]
