@@ -1,6 +1,7 @@
 # src/billing_system/infrastructure/protocols/sqlite_uow.py
 import sqlite3
 from pathlib import Path
+from typing import cast
 
 from billing_system.application.protocols import UnitOfWork
 from billing_system.infrastructure.errors import (
@@ -28,13 +29,20 @@ class SqliteUnitOfWork(UnitOfWork):
         self.conn.cursor().execute("BEGIN;")
         return self
 
-    def __exit__(self, *_: object) -> None:
-        if isinstance(self.conn, sqlite3.Connection):
-            if self.conn.in_transaction:
-                # Откат если забыли сделать какие-то изменения.
-                self.rollback()
-            self.conn.close()
-            self.conn = None
+    def __exit__(self, *args: object) -> None:
+        if not isinstance(self.conn, sqlite3.Connection):
+            return
+
+        exc_type = cast("Exception | None", args[1])
+
+        if exc_type is not None:
+            self.rollback()
+
+        elif self.conn.in_transaction:
+            self.commit()
+
+        self.conn.close()
+        self.conn = None
 
     def commit(self) -> None:
         """Сохранение изменений в sqlite."""
@@ -42,7 +50,7 @@ class SqliteUnitOfWork(UnitOfWork):
             raise NoConnectionError(
                 "Запуск commit() без with (вне контекста).",
             )
-        self.conn.cursor().execute("COMMIT;")
+        self.conn.commit()
 
     def rollback(self) -> None:
         """Откат изменений в sqlite."""
@@ -50,4 +58,4 @@ class SqliteUnitOfWork(UnitOfWork):
             raise NoConnectionError(
                 "Запуск rollback() без with (вне контекста).",
             )
-        self.conn.cursor().execute("ROLLBACK;")
+        self.conn.rollback()

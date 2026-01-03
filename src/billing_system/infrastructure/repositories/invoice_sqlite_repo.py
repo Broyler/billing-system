@@ -75,8 +75,12 @@ class InvoiceSqliteRepository(InvoiceRepository):
     """Класс репозитория счета с sqlite3."""
 
     def __init__(self, conn: sqlite3.Connection) -> None:
-        self.__cursor = conn.cursor()
+        self.__conn = conn
         self.__create_tables()
+
+    @property
+    def __cursor(self) -> sqlite3.Cursor:
+        return self.__conn.cursor()
 
     def __create_tables(self) -> None:
         """Метод должен создать таблицы на старте репозитория."""

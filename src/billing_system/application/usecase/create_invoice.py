@@ -22,4 +22,3 @@ class CreateInvoice:
             currency = Currency.from_code(req.currency)
             invoice = Invoice(currency=currency, invoice_id=invoice_id)
             uow.invoices.add(invoice=invoice)
-            uow.commit()

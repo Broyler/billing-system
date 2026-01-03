@@ -24,4 +24,3 @@ class InvoiceAddLine:
             )
             invoice.add_line(line)
             uow.invoices.save(invoice)
-            uow.commit()

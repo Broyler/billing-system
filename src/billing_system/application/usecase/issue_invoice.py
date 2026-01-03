@@ -27,4 +27,3 @@ class IssueInvoice:
             invoice = uow.invoices.get(invoice_id)
             invoice.issue(self.__clock)
             uow.invoices.save(invoice=invoice)
-            uow.commit()
