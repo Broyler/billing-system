@@ -5,7 +5,10 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from billing_system.domain.aggregates import Invoice, InvoiceRehydrateData
-from billing_system.domain.errors import InvoiceNotFoundError
+from billing_system.domain.errors import (
+    InvoiceNotFoundError,
+    InvoiceNotUniqueError,
+)
 from billing_system.domain.repositories import InvoiceRepository
 from billing_system.domain.value_objects import (
     Currency,
@@ -38,7 +41,10 @@ def minor_to_money(amount_minor: int, currency: Currency) -> Money:
 
 def money_to_minor(money: Money) -> int:
     """Преобразовывает объект денег в минорную сумму для бд."""
-    return int(money.amount * 10**money.currency.exp)
+    minor = money.amount * 10**money.currency.exp
+    if minor != minor.to_integral_value():
+        raise ValueError("Не числовой размер суммы в миноре.")
+    return int(minor)
 
 
 def read_tax(amount: int | None, currency: Currency) -> Tax | None:
@@ -235,26 +241,32 @@ class InvoiceSqliteRepository(InvoiceRepository):
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         );
         """
-        self.__cursor.execute(
-            q,
-            (
-                str(invoice.invoice_id),
-                invoice.currency.value,
-                invoice.status.value,
-                money_to_minor(invoice.tax.amount)
-                if isinstance(invoice.tax, Tax)
-                else None,
-                money_to_minor(invoice.discount.amount)
-                if isinstance(invoice.discount, Discount)
-                else None,
-                dt_to_unix(invoice.issued_at),
-                dt_to_unix(invoice.paid_at),
-                dt_to_unix(invoice.voided_at),
-                invoice.payment_idempotency_key,
-                invoice.void_idempotency_key,
-            ),
-        )
-        self.__update_invoice_lines(invoice)
+        try:
+            self.__cursor.execute(
+                q,
+                (
+                    str(invoice.invoice_id),
+                    invoice.currency.value,
+                    invoice.status.value,
+                    money_to_minor(invoice.tax.amount)
+                    if isinstance(invoice.tax, Tax)
+                    else None,
+                    money_to_minor(invoice.discount.amount)
+                    if isinstance(invoice.discount, Discount)
+                    else None,
+                    dt_to_unix(invoice.issued_at),
+                    dt_to_unix(invoice.paid_at),
+                    dt_to_unix(invoice.voided_at),
+                    invoice.payment_idempotency_key,
+                    invoice.void_idempotency_key,
+                ),
+            )
+            self.__update_invoice_lines(invoice)
+
+        except sqlite3.IntegrityError as e:
+            raise InvoiceNotUniqueError(
+                "InvoiceId должен быть уникальным.",
+            ) from e
 
     def save(self, invoice: Invoice) -> None:
         """Обновляет объект счета в БД."""

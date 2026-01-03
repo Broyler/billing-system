@@ -10,10 +10,19 @@ from billing_system.application.dto import (
     CreateInvoiceRequest,
     InvoiceAddLineRequest,
 )
-from billing_system.application.dto.invoice import IssueInvoiceRequest
+from billing_system.application.dto.invoice import (
+    GetInvoiceRequest,
+    IssueInvoiceRequest,
+    VoidInvoiceRequest,
+)
 from billing_system.application.usecase import CreateInvoice, InvoiceAddLine
+from billing_system.application.usecase.get_invoices import GetInvoice
 from billing_system.application.usecase.issue_invoice import IssueInvoice
+from billing_system.application.usecase.void_invoice import VoidInvoice
 from billing_system.domain.errors.invoice_not_found import InvoiceNotFoundError
+from billing_system.domain.errors.invoice_not_unique import (
+    InvoiceNotUniqueError,
+)
 from billing_system.domain.errors.invoice_operation import (
     InvoiceOperationError,
 )
@@ -108,6 +117,54 @@ def test_issue_invoice(tmp_path: Path) -> None:
         )
 
 
+def test_void_invoice(tmp_path: Path) -> None:
+    f = tmp_path / "db.sqlite"
+    uow = SqliteUnitOfWork(f)
+    uid = uuid4()
+    clock = FakeClock()
+    cur = Currency.EUR.value
+    CreateInvoice(uow)(CreateInvoiceRequest(id=uid, currency=cur))
+    VoidInvoice(uow, clock)(
+        VoidInvoiceRequest(invoice_id=uid, idempotency_key="123"),
+    )
+    with uow:
+        invoice = uow.invoices.get(InvoiceId(uid))
+    assert invoice.status == InvoiceStatus.VOID
+    assert invoice.voided_at == datetime.datetime(
+        year=2020,
+        month=11,
+        day=1,
+        tzinfo=datetime.UTC,
+    )
+
+
+def test_get_invoice(tmp_path: Path) -> None:
+    f = tmp_path / "db.sqlite"
+    uow = SqliteUnitOfWork(f)
+    uid = uuid4()
+    clock = FakeClock()
+    cur = Currency.EUR.value
+    CreateInvoice(uow)(CreateInvoiceRequest(id=uid, currency=cur))
+    InvoiceAddLine(uow)(
+        InvoiceAddLineRequest(
+            invoice_id=uid,
+            amount=Decimal("1.5"),
+            quantity=Decimal("2.0"),
+            description="Печенье",
+        ),
+    )
+    IssueInvoice(uow, clock)(IssueInvoiceRequest(invoice_id=uid))
+
+    with uow:
+        invoice1 = uow.invoices.get(InvoiceId(uid))
+
+    invoice2 = GetInvoice(uow)(GetInvoiceRequest(invoice_id=uid))
+
+    assert invoice1.status.value == invoice2.status
+    assert str(invoice1.invoice_id) == str(invoice2.invoice_id)
+    assert invoice1.total.amount == invoice2.total
+
+
 def test_read_tax() -> None:
     cur = Currency.EUR
     assert read_tax(None, cur) is None
@@ -148,3 +205,18 @@ def test_uow_rollback_without_context(tmp_path: Path) -> None:
     uow = SqliteUnitOfWork(f)
     with pytest.raises(NoConnectionError):
         uow.rollback()
+
+
+def test_id_not_unique(tmp_path: Path) -> None:
+    f = tmp_path / "db.sqlite"
+    uow = SqliteUnitOfWork(f)
+    req = CreateInvoiceRequest(id=uuid4(), currency=Currency.EUR.value)
+    CreateInvoice(uow)(req)
+    with pytest.raises(InvoiceNotUniqueError):
+        CreateInvoice(uow)(req)
+
+
+def test_empty_result_on_exit(tmp_path: Path) -> None:
+    f = tmp_path / "db.sqlite"
+    uow = SqliteUnitOfWork(f)
+    uow.__exit__(None, None, None)

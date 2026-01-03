@@ -14,6 +14,9 @@ from billing_system.domain.value_objects import (
     Currency,
     Money,
 )
+from billing_system.infrastructure.repositories.invoice_sqlite_repo import (
+    money_to_minor,
+)
 
 
 @pytest.mark.parametrize(
@@ -218,3 +221,14 @@ def test_money_accepts_less_places(d: Decimal, places: int) -> None:
     mon = Money(dec, Currency.EUR)
     assert mon.amount.as_tuple().exponent == -Currency.EUR.exp
     assert mon.amount == dec.quantize(q_exp)
+
+
+def test_money_to_minor() -> None:
+    m = Money(Decimal("1.00"), Currency.EUR)
+
+    # Специально ломаем инвариант для проверки сейфгарда.
+    object.__setattr__(m, "amount", Decimal("1.005"))  # Экспонента EUR - 2
+
+    msg = "Не числовой размер суммы в миноре."
+    with pytest.raises(ValueError, match=msg):
+        money_to_minor(m)

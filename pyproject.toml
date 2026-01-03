@@ -5,8 +5,10 @@ description = "Пет-проект с надежной биллинг систе
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi[standard]>=0.128.0",
     "pydantic>=2.0.0",
     "typing-extensions>=4.0.0",
+    "uvicorn>=0.40.0",
 ]
 
 [project.optional-dependencies]
@@ -31,20 +33,20 @@ target-version = "py312"
 line-length = 79
 
 [tool.bandit]
-exclude_dirs = ["tests", "htmlcov", ".venv", "dist", "build"]
+exclude_dirs = ["tests", "htmlcov", ".venv", "dist", "build", "versions"]
 skips = ["B101"]
 
 [tool.lizard]
-exclude = ["tests/*", "htmlcov/*", ".venv/*", "dist/*", "build/*", "uv.lock"]
+exclude = ["tests/*", "htmlcov/*", ".venv/*", "dist/*", "build/*", "uv.lock", "versions/*"]
 ignore_warnings = true
 
 [tool.prospector]
-ignore-paths = ["tests", "htmlcov", ".venv", "dist", "build"]
+ignore = ["tests", "htmlcov", ".venv", "dist", "build", "versions"]
 max-line-length = 79
 profile = "strictness_veryhigh"
 
 [tool.pylint.main]
-ignore = ["tests", "htmlcov", ".venv", "dist", "build"]
+ignore = ["tests", "htmlcov", ".venv", "dist", "build", "versions"]
 ignore-paths = ["uv.lock"]
 py-version = "3.12"
 jobs = 0

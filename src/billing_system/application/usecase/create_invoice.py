@@ -9,10 +9,6 @@ class CreateInvoice:
     """Класс юзкейс для создания счета."""
 
     def __init__(self, uow: UnitOfWork) -> None:
-        """Метод для инициализации юзкейса.
-
-        Принимает репозиторий счета..
-        """
         self.__uow = uow
 
     def __call__(self, req: CreateInvoiceRequest) -> None:
