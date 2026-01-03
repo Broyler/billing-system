@@ -29,21 +29,21 @@ from billing_system.infrastructure.protocols.sqlite_uow import SqliteUnitOfWork
 from billing_system.infrastructure.protocols.system_clock import SystemClock
 
 
-def create_app(uow: UnitOfWork, clock: ClockProtocol) -> FastAPI:
+def create_app(_uow: UnitOfWork, _clock: ClockProtocol) -> FastAPI:
     """Фабрика для создания fastapi адаптера.
 
     Принимает протокол часов и UOW объект.
     """
-    app = FastAPI()
+    _app = FastAPI()
     invoices = APIRouter(prefix="/invoice")
 
     def get_uow() -> UnitOfWork:
-        return uow
+        return _uow
 
     def get_clock() -> ClockProtocol:
-        return clock
+        return _clock
 
-    @app.exception_handler(DomainError)
+    @_app.exception_handler(DomainError)
     async def domain_error_handler(
         _: Request,
         exc: DomainError,
@@ -112,8 +112,8 @@ def create_app(uow: UnitOfWork, clock: ClockProtocol) -> FastAPI:
         VoidInvoice(uow, clock)(req)
         return await get_invoice(InvoiceId(req.invoice_id), uow)
 
-    app.include_router(invoices)
-    return app
+    _app.include_router(invoices)
+    return _app
 
 
 uow = SqliteUnitOfWork(Path("db.sqlite"))
