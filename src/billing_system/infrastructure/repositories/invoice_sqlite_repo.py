@@ -16,7 +16,6 @@ from billing_system.domain.value_objects import (
     Tax,
 )
 from billing_system.domain.value_objects.invoice_status import InvoiceStatus
-from billing_system.infrastructure.errors import NoConnectionError
 
 
 def fromtimestamp(t: int | None) -> datetime | None:
@@ -75,37 +74,12 @@ class InvoiceResultSQL:
 class InvoiceSqliteRepository(InvoiceRepository):
     """Класс репозитория счета с sqlite3."""
 
-    def __init__(self, db_path: str) -> None:
-        self.__db_path = db_path
-        self.__conn: sqlite3.Connection | None = None
+    def __init__(self, conn: sqlite3.Connection) -> None:
+        self.__cursor = conn.cursor()
         self.__create_tables()
-
-    def __enter__(self) -> "InvoiceSqliteRepository":
-        """Метод для входа в контекст. Проверяет подключение."""
-        if not self.__conn:
-            self.__conn = sqlite3.connect(self.__db_path)
-        return self
-
-    def __exit__(self, *args: object) -> None:
-        """Метод для выхода из контекста. Закрывает подключение."""
-        if self.__conn:
-            self.__conn.close()
-        self.__conn = None
-
-    def __get_conn(self) -> sqlite3.Connection:
-        """Метод для получения подключения, кидает ошибку если его нет."""
-        if not self.__conn:
-            raise NoConnectionError("Нет подключения.")
-        return self.__conn
-
-    def __get_cursor(self) -> sqlite3.Cursor:
-        """Метод для получения курсора, кидает ошибку если нет подключения."""
-        return self.__get_conn().cursor()
 
     def __create_tables(self) -> None:
         """Метод должен создать таблицы на старте репозитория."""
-        conn = sqlite3.connect(self.__db_path)
-        cur = conn.cursor()
         queries = [
             """
             PRAGMA foreign_keys = ON;
@@ -138,19 +112,17 @@ class InvoiceSqliteRepository(InvoiceRepository):
             """,
         ]
         for q in queries:
-            cur.execute(q)
-        conn.close()
+            self.__cursor.execute(q)
 
     def __get_invoice_data(self, invoice_id: InvoiceId) -> InvoiceResultSQL:
         """Метод возвращает сырые данные счета по Id."""
-        cur = self.__get_cursor()
         _id = str(invoice_id)
         q = """
         SELECT * FROM `Invoice`
         WHERE `id` = ?
         LIMIT 1;
         """
-        res = cur.execute(q, (_id,))
+        res = self.__cursor.execute(q, (_id,))
         i = res.fetchone()
         if not i:
             raise InvoiceNotFoundError("Счет не найден.")
@@ -197,7 +169,7 @@ class InvoiceSqliteRepository(InvoiceRepository):
     ) -> list[InvoiceLine]:
         """Метод возвращает список строчек счета по его Id и валюте."""
         _id = str(invoice_id)
-        cur = self.__get_cursor()
+        cur = self.__cursor
         q = """
         SELECT * FROM `InvoiceLine`
         WHERE `invoice_id` = ?;
@@ -219,8 +191,7 @@ class InvoiceSqliteRepository(InvoiceRepository):
         DELETE FROM `InvoiceLine` WHERE
         `invoice_id` = ?;
         """
-        cur = self.__get_cursor()
-        cur.execute(q, (str(invoice.invoice_id),))
+        self.__cursor.execute(q, (str(invoice.invoice_id),))
 
     def __create_new_invoice_lines(self, invoice: Invoice) -> None:
         """Метод для создания новых строчек счета."""
@@ -228,7 +199,7 @@ class InvoiceSqliteRepository(InvoiceRepository):
         INSERT INTO `InvoiceLine` (invoice_id, description,
         unit_price_minor, quantity) VALUES (?, ?, ?, ?);
         """
-        cur = self.__get_cursor()
+        cur = self.__cursor
         for line in invoice.lines:
             cur.execute(
                 q,
@@ -260,9 +231,7 @@ class InvoiceSqliteRepository(InvoiceRepository):
             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         );
         """
-        cur = self.__get_cursor()
-        conn = self.__get_conn()
-        cur.execute(
+        self.__cursor.execute(
             q,
             (
                 str(invoice.invoice_id),
@@ -282,7 +251,6 @@ class InvoiceSqliteRepository(InvoiceRepository):
             ),
         )
         self.__update_invoice_lines(invoice)
-        conn.commit()
 
     def save(self, invoice: Invoice) -> None:
         """Обновляет объект счета в БД."""
@@ -292,9 +260,7 @@ class InvoiceSqliteRepository(InvoiceRepository):
         payment_idempotency_key = ?, void_idempotency_key = ?
         WHERE id = ?;
         """
-        cur = self.__get_cursor()
-        conn = self.__get_conn()
-        cur.execute(
+        self.__cursor.execute(
             q,
             (
                 invoice.currency.value,
@@ -314,4 +280,3 @@ class InvoiceSqliteRepository(InvoiceRepository):
             ),
         )
         self.__update_invoice_lines(invoice)
-        conn.commit()
